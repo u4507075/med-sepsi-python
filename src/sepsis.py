@@ -12,7 +12,108 @@ lemmatizer = WordNetLemmatizer()
 from nltk.corpus import stopwords
 import re
 #nltk.download()
-
+relevant_feature =  [
+                        'shock',
+                        'septic',
+                        'bp',
+                        'er',
+                        'load',
+                        'line',
+                        'nss',
+                        'levophed',
+                        'drop',
+                        'central',
+                        'heart',
+                        'neutropenia',
+                        'imp',
+                        #'ext',
+                        'aki',
+                        'febrile',
+                        'abd',
+                        #'pi',
+                        'cvp',
+                        'hydrocortisone',
+                        'murmur',
+                        'nephro',
+                        #'ml',
+                        'acidosis',
+                        #'cc',
+                        'regular',
+                        #'heent',
+                        'rt',
+                        'hemodynamic',
+                        'pale',
+                        'metabolic',
+                        'ward',
+                        'pr',
+                        'empirical',
+                        'atn',
+                        'drip',
+                        'soft',
+                        'lungs',
+                        'rr',
+                        'bun/cr',
+                        'hypovolemic',
+                        'access',
+                        'edema',
+                        'crrt',
+                        'u/d',
+                        'meropenem',
+                        'secretion',
+                        'anc',
+                        'jx',
+                        'cast',
+                        #'lab',
+                        'cpr',
+                        'bma',
+                        'sound',
+                        'ua',
+                        'blood',
+                        'sputum',
+                        'serum',
+                        'yr',
+                        '=-ve',
+                        's1s2',
+                        'gross',
+                        'creatinine',
+                        'stable',
+                        'med',
+                        'sec',
+                        'fine',
+                        'g/s',
+                        'muddy',
+                        'lavage',
+                        'na',
+                        'h/d',
+                        'baseline',
+                        'ft3',
+                        'ugih',
+                        'consult',
+                        'iii',
+                        'iv',
+                        'segment',
+                        'set',
+                        'lpm',
+                        'wbc=',
+                        'chemo',
+                        'tracheostomy',
+                        'cirrhosis',
+                        'aml',
+                        'ft4',
+                        'male',
+                        'advice',
+                        'cardiogenic',
+                        'subicu',
+                        'airway',
+                        'echo',
+                        'start',
+                        'lt.',
+                        'ceftazidime',
+                        'cloxacillin',
+                        'tft',
+                        'sub',
+                        'hco3'
+                    ]
 def is_number(s):
     try:
         float(s)
@@ -52,20 +153,20 @@ def main():
     df = my_database.get_data('''(select sum_note,dx1_nm, dx2_nm, dx3_nm 
                                  from ds_main_ap2_pt 
                                  WHERE CONCAT(dx1_nm, dx2_nm, dx3_nm) like '%septicaemia%' 
-                                 limit 2000)
+                                 limit 5000)
                                  UNION
                                  (select sum_note,dx1_nm, dx2_nm, dx3_nm 
                                  from ds_main_ap2_pt 
                                  WHERE CONCAT(dx1_nm, dx2_nm, dx3_nm) like '%shock%' 
-                                 limit 1800);''')
+                                 limit 4000);''')
     caseset = []
     cols = ['bp_value','rr_value','temp_value','pao2_value','plt_value','wbc_value','cr_value']
 
     for index, row in df.iterrows():
-        target = 'no_shock'
+        target = '1_no_shock'
         # if sepsis with shock
         if any("shock" in s for s in [row['dx1_nm'].lower(), row['dx2_nm'].lower(), row['dx3_nm'].lower()]):
-            target = 'shock'
+            target = '0_shock'
         # Remove all non ASCII characters from unicode string
         text = ''.join([x for x in row['sum_note'] if ord(x) < 128])
         # make lower case
@@ -113,7 +214,7 @@ def main():
             if 'cr' == tokens[index]:
                 cr += [get_value(tokens,index)]
                 
-            if token in stopwords.words('english') or len(re.sub('[^a-z]','', token)) < 2 or token == 'shock':
+            if token in stopwords.words('english') or len(re.sub('[^a-z]','', token)) < 2 or token == 'shock' or token not in relevant_feature:
                 clean_tokens.remove(token)
                 
         value = [find_min(bp),find_min(rr),find_min(temp),find_min(pao2),find_min(plt),find_min(wbc),find_min(cr)]
@@ -148,3 +249,4 @@ def main():
     dataset.to_csv('result1.csv', index=False)
     
 main()
+
