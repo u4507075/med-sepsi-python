@@ -150,15 +150,16 @@ def find_min(v):
     else:
         return ''
 def main():
+
     df = my_database.get_data('''(select sum_note,dx1_nm, dx2_nm, dx3_nm 
                                  from ds_main_ap2_pt 
-                                 WHERE CONCAT(dx1_nm, dx2_nm, dx3_nm) like '%septicaemia%' 
-                                 limit 5000)
+                                 WHERE CONCAT(dx1_nm, dx2_nm, dx3_nm) like '%shock%')
                                  UNION
                                  (select sum_note,dx1_nm, dx2_nm, dx3_nm 
                                  from ds_main_ap2_pt 
-                                 WHERE CONCAT(dx1_nm, dx2_nm, dx3_nm) like '%shock%' 
-                                 limit 4000);''')
+                                 WHERE (CONCAT(dx1_nm, dx2_nm, dx3_nm) not like '%shock%')
+                                 AND CONCAT(dx1_nm, dx2_nm, dx3_nm) like '%septicaemia%' 
+                                 limit 4500);''')
     caseset = []
     cols = ['bp_value','rr_value','temp_value','pao2_value','plt_value','wbc_value','cr_value']
 
@@ -214,7 +215,7 @@ def main():
             if 'cr' == tokens[index]:
                 cr += [get_value(tokens,index)]
                 
-            if token in stopwords.words('english') or len(re.sub('[^a-z]','', token)) < 2 or token == 'shock' or token not in relevant_feature:
+            if token in stopwords.words('english') or len(re.sub('[^a-z]','', token)) < 2 or token not in relevant_feature:
                 clean_tokens.remove(token)
                 
         value = [find_min(bp),find_min(rr),find_min(temp),find_min(pao2),find_min(plt),find_min(wbc),find_min(cr)]
@@ -246,7 +247,7 @@ def main():
     target_class = result[cols+['target_class']]
     dataset = pandas.concat([feature,target_class], axis=1)
     dataset.drop_duplicates(inplace=True)
-    dataset.to_csv('result1.csv', index=False)
+    dataset.to_csv('result2.csv', index=False)
     
 main()
 
